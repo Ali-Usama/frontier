@@ -22,7 +22,7 @@ use scale_info::TypeInfo;
 // Substrate
 use sp_core::{ecdsa, RuntimeDebug, H160, H256};
 use sp_io::hashing::keccak_256;
-use sp_runtime_interface::pass_by::PassByInner;
+// use sp_runtime_interface::pass_by::PassByInner;
 
 /// A fully Ethereum-compatible `AccountId`.
 /// Conforms to H160 address and ECDSA key standards.
@@ -147,12 +147,12 @@ impl EthereumSignature {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-#[derive(RuntimeDebug, Encode, Decode, MaxEncodedLen, TypeInfo, PassByInner)]
-pub struct EthereumSigner([u8; 20]);
+#[derive(RuntimeDebug, Encode, Decode, MaxEncodedLen, TypeInfo)]
+pub struct EthereumSigner([u8; 20], Option<ecdsa::Public>);
 
 impl From<[u8; 20]> for EthereumSigner {
 	fn from(x: [u8; 20]) -> Self {
-		EthereumSigner(x)
+		EthereumSigner(x, None)
 	}
 }
 
@@ -170,15 +170,28 @@ impl std::fmt::Display for EthereumSigner {
 	}
 }
 
+impl From<Option<ecdsa::Public>> for EthereumSigner {
+	fn from(public: Option<ecdsa::Public>) -> Self {
+		EthereumSigner([0u8; 20], public)
+	}
+}
+
+impl From<EthereumSigner> for Option<ecdsa::Public> {
+	fn from(signer: EthereumSigner) -> Self {
+		signer.1
+	}
+}
+
 impl From<ecdsa::Public> for EthereumSigner {
 	fn from(pk: ecdsa::Public) -> Self {
-		let decompressed = libsecp256k1::PublicKey::parse_compressed(&pk.0)
-			.expect("Wrong compressed public key provided")
-			.serialize();
-		let mut m = [0u8; 64];
-		m.copy_from_slice(&decompressed[1..65]);
-		let account = H160::from(H256::from(keccak_256(&m)));
-		EthereumSigner(account.into())
+		// let decompressed = libsecp256k1::PublicKey::parse_compressed(&pk.0)
+		// 	.expect("Wrong compressed public key provided")
+		// 	.serialize();
+		// let mut m = [0u8; 64];
+		// m.copy_from_slice(&decompressed[1..65]);
+		// let account = H160::from(H256::from(keccak_256(&m)));
+		// EthereumSigner(account.into())
+		EthereumSigner::from(Some(pk))
 	}
 }
 
@@ -222,5 +235,15 @@ mod tests {
 		let account: AccountId20 = signer.into_account();
 		let account_fmt = format!("{}", account);
 		assert_eq!(account_fmt, "0xE04CC55ebEE1cBCE552f250e85c57B70B2E2625b");
+	}
+
+	#[test]
+	fn test_from_ecdsa_public() {
+		let pk = ecdsa::Pair::from_string("//Alice", None)
+			.expect("static values are valid; qed")
+			.public();
+		let signer: EthereumSigner = pk.into();
+		let recovered_pk: ecdsa::Public = signer.into();
+		assert_eq!(pk, recovered_pk);
 	}
 }
