@@ -140,6 +140,18 @@ impl sp_runtime::traits::Verify for EthereumSignature {
 	}
 }
 
+impl From<EthereumSignature> for ecdsa::Signature {
+	fn from(s: EthereumSignature) -> Self {
+		s.0
+	}
+}
+
+impl From<ecdsa::Signature> for EthereumSignature {
+	fn from(s: ecdsa::Signature) -> Self {
+		Self(s)
+	}
+}
+
 impl EthereumSignature {
 	pub fn new(s: ecdsa::Signature) -> Self {
 		EthereumSignature(s)
@@ -181,6 +193,13 @@ impl From<EthereumSigner> for Option<ecdsa::Public> {
 		signer.1
 	}
 }
+
+impl From<EthereumSigner> for ecdsa::Public {
+	fn from(signer: EthereumSigner) -> Self {
+		signer.1.expect("EthereumSigner is not initialized")
+	}
+}
+
 
 impl From<ecdsa::Public> for EthereumSigner {
 	fn from(pk: ecdsa::Public) -> Self {
