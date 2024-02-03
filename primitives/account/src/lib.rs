@@ -168,6 +168,12 @@ impl From<[u8; 20]> for EthereumSigner {
 	}
 }
 
+impl From<EthereumSigner> for [u8; 20] {
+	fn from(x: EthereumSigner) -> Self {
+		x.0
+	}
+}
+
 impl sp_runtime::traits::IdentifyAccount for EthereumSigner {
 	type AccountId = AccountId20;
 	fn into_account(self) -> AccountId20 {
