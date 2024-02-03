@@ -168,9 +168,9 @@ impl From<[u8; 20]> for EthereumSigner {
 	}
 }
 
-impl From<EthereumSigner> for [u8; 20] {
+impl From<EthereumSigner> for AccountId20 {
 	fn from(x: EthereumSigner) -> Self {
-		x.0
+		AccountId20(x.0)
 	}
 }
 
