@@ -193,7 +193,19 @@ impl std::fmt::Display for EthereumSigner {
 
 impl From<Option<ecdsa::Public>> for EthereumSigner {
 	fn from(public: Option<ecdsa::Public>) -> Self {
-		EthereumSigner([0u8; 20], public)
+		if let Some(pk) = public {
+			let decompressed = libsecp256k1::PublicKey::parse_compressed(&pk.0)
+				.expect("Wrong compressed public key provided")
+				.serialize();
+			let mut m = [0u8; 64];
+			m.copy_from_slice(&decompressed[1..65]);
+			let account = H160::from(H256::from(keccak_256(&m)));
+			log::warn!("fp-account from ecdsa::Public : {:?}", account);
+			EthereumSigner(account.into(), Some(pk))
+		} else {
+			log::warn!("fp-account from ecdsa::Public : NONE");
+			EthereumSigner([0u8; 20], None)
+		}
 	}
 }
 
