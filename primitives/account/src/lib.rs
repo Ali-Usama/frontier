@@ -122,6 +122,9 @@ impl sp_runtime::traits::Verify for EthereumSignature {
 	type Signer = EthereumSigner;
 	fn verify<L: sp_runtime::traits::Lazy<[u8]>>(&self, mut msg: L, signer: &AccountId20) -> bool {
 		let m = keccak_256(msg.get());
+		log::warn!("fp-account message: {:?}", m);
+		log::warn!("failed to recover: {:?}", self.0);
+		log::warn!("fp-account signer: {:?}", signer);
 		match sp_io::crypto::secp256k1_ecdsa_recover(self.0.as_ref(), &m) {
 			Ok(pubkey) => AccountId20(H160::from(H256::from(keccak_256(&pubkey))).0) == *signer,
 			Err(sp_io::EcdsaVerifyError::BadRS) => {
