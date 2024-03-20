@@ -18,15 +18,10 @@ use sp_core::{
 	crypto::{ByteArray, KeyTypeId},
 	OpaqueMetadata, H160, H256, U256,
 };
-use sp_runtime::{
-	create_runtime_str, generic, impl_opaque_keys,
-	traits::{
-		BlakeTwo256, Block as BlockT, DispatchInfoOf, Dispatchable, Get, IdentifyAccount,
-		IdentityLookup, NumberFor, One, PostDispatchInfoOf, UniqueSaturatedInto, Verify,
-	},
-	transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError},
-	ApplyExtrinsicResult, ConsensusEngineId, Perbill, Permill,
-};
+use sp_runtime::{create_runtime_str, generic, impl_opaque_keys, traits::{
+	BlakeTwo256, Block as BlockT, DispatchInfoOf, Dispatchable, Get, IdentifyAccount,
+	IdentityLookup, NumberFor, One, PostDispatchInfoOf, UniqueSaturatedInto, Verify,
+}, transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError}, ApplyExtrinsicResult, ConsensusEngineId, Perbill, Permill, ExtrinsicInclusionMode};
 use sp_std::{marker::PhantomData, prelude::*};
 use sp_version::RuntimeVersion;
 // Substrate FRAME
@@ -216,6 +211,11 @@ impl frame_system::Config for Runtime {
 	/// The set code logic, just the default since we're not a parachain.
 	type OnSetCode = ();
 	type MaxConsumers = ConstU32<16>;
+	type SingleBlockMigrations = ();
+	type MultiBlockMigrator = ();
+	type PreInherents = ();
+	type PostInherents = ();
+	type PostTransactions = ();
 }
 
 parameter_types! {
@@ -602,7 +602,7 @@ impl_runtime_apis! {
 			Executive::execute_block(block)
 		}
 
-		fn initialize_block(header: &<Block as BlockT>::Header) {
+		fn initialize_block(header: &<Block as BlockT>::Header) -> ExtrinsicInclusionMode {
 			Executive::initialize_block(header)
 		}
 	}
